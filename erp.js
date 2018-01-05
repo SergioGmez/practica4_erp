@@ -105,7 +105,6 @@ function StoreHouse(){
 	var products = [];
     var categories = [];
     var shops = [];
-    var stock = [];
     
     //Definición de los metodos 'get' y 'set' del atributo name
     Object.defineProperty(this, 'name', {
@@ -114,13 +113,13 @@ function StoreHouse(){
 			},
 			set:function(value){
 				value = value.trim();
-				if (value === 'undefined' || value === 'Anon') throw new EmptyValueException("name");					
+				if (value === "" ) throw new EmptyValueException("name");		
 				name = value;
 			}		
 		});
 	
-    //Definición del metodo 'get' del atributo categories. Devuelve iterador
-    Object.defineProperty(this, 'getCategories', {
+    //Definición del metodo 'get' del atributo categories. Devuelve iterador.
+    Object.defineProperty(this, 'categories', {
 		get:function(){
             var nextIndex = 0;
             return {
@@ -131,8 +130,9 @@ function StoreHouse(){
 		}	
 	});
     
-    //Definición del metodo 'get' del atributo sjops. Devuelve iterador
-    Object.defineProperty(this, 'getShops', {
+    
+    //Definición del metodo 'get' del atributo shops. Devuelve iterador.
+    Object.defineProperty(this, 'shops', {
 		get:function(){
             var nextIndex = 0;
             return {
@@ -143,7 +143,7 @@ function StoreHouse(){
 		}	
 	});
     
-    
+    //Método que permite añadir una categoria. Devuelve el número de categorias.
     this.addCategory = function(category){
 		if (!(category instanceof Category)){ 
 			throw new CategoryStoreHouseException();
@@ -160,9 +160,10 @@ function StoreHouse(){
             throw new CategoryExistsException();
         }
         
-        return categories.length();
+        return categories.length;
 	}
     
+    //Método que permite eliminar una categoria. Devuelve el número de categorias.
     this.removeCategory = function(category){
 		if (!(category instanceof Category)) { 
 			throw new CategoryStoreHouseException();
@@ -170,38 +171,37 @@ function StoreHouse(){
         
 		var indexCategory = getCategoryIndex(category);   
         if (indexCategory !== -1){
+            var i = 0;
+            
+            while ( i < categories[indexCategory].length){
+                this.addProduct(categories[indexCategory].products[i], this.defaultCategory);
+            }
             categories.splice(indexCategory, 1);
         }else{
             throw new CategoryNoExistsException();
         }
         
-        return categories.length();
+        return categories.length;
 	}
     
+    //Devuelve la posición de una categoria dada.
     function getCategoryIndex(category){
         if (!(category instanceof Category)) { 
             throw new CategoryStoreHouseException();
         }		
 
-        function compareElements(element) {
+        function compareElements(element){
             return (element.title === category.title)
         }
 				
-        return category.findIndex(compareElements);		
+        return categories.findIndex(compareElements);		
 	}
     
-    function getProductIndex(product){
-        if (!(product instanceof Product)) { 
-            throw new CategoryStoreHouseException();
-        }		
-
-        function compareElements(element) {
-            return (element.serialNumber === product.serialNumber)
-        }
-				
-        return products.findIndex(compareElements);		
-	}
+    //Categoría por defecto.
+	var defaultCategory = new Category ("Anonymous");
+	this.addCategory(defaultCategory);
     
+    //Metodo que permite añadir un producto con una categoria. Devuelve el numero de productos de dicha categoria.
     this.addProduct = function(product, category){
 		if (!(product instanceof Product)) { 
 			throw new ProductStoreHouseException();
@@ -215,16 +215,18 @@ function StoreHouse(){
 
 
 		var productPosition = getProductIndex(product);
+        
         if (productPosition === -1){
 			products.push(product);
 		}
         
-        var categoryPosition = getCategoryIndex(category); 
+        var categoryPosition = getCategoryIndex(category);
 		if (categoryPosition === -1){
             categoryPosition = this.addCategory(category)-1;
 		}	
         
-        var productCategoryPos = getCategoryProducts(product, categories[categoryPosition]);
+        var productCategoryPos = getCategoryProducts(product, categories[categoryPosition].products);
+        
 		if (productCategoryPos === -1){
 			categories[categoryPosition].products.push(product);
 		}else{
@@ -233,40 +235,52 @@ function StoreHouse(){
         return categories[categoryPosition].products.length;
 	}
     
-    function getCategoryProducts(product, category){
-				if (!(category instanceof Category)) { 
-					throw new CategoryNoExistsException();
-				}		
+    this.removeProduct = function(product){
+		if (!(product instanceof Product)) { 
+			throw new ProductStoreHouseException();
+		}				
 
-				var categoryPosition = getCategoryIndex(category); 	
-				if (categoryPosition === -1) throw new CategoryNoExistsException();
+		var i = categories.length - 1, position = -1;
+		while (i >= 0 && position === -1){					
+			position = getCategoryProducts(product, categories[i].products); 
+			i--;
+		}		
+
+		if (position !== -1){
+			categories[i+1].products.splice(position, 1);
+		} else {
+			throw new ProductNotExistsStoreHouseException();
+		}
         
-				var nextIndex = 0;
-                return {
-                    next: function(){
-                        return nextIndex < categories[categoryPosition].products.length ?
-                        {value:  categories[categoryPosition].products[nextIndex++], done: false} : {done: true};
-                    }
-                }
+        return categories[i+1].products.lenght;
 	}
     
-    /*this.removeProduct = function(product){
-				if (!(product instanceof Product)) { 
-					throw new ImageImageManagerException();
-				}				
+    //Metodo que devuelve la posición de un producto dado.
+    function getProductIndex(product){
+        if (!(product instanceof Product)) { 
+            throw new ProductStoreHouseException();
+        }		
 
-				var i = categories.length - 1, position = -1;
-				while (i >= 0 && position === -1){					
-					position = getCategoryProducts(product, categories[i].products); 
-					i--;
-				}		
-
-				if (position !== -1){
-					categories[i+1].products.splice(position, 1);
-				} else {
-					throw new ImageNotExistsImageManagerException();
-				}
-			}*/
+        function compareElements(element) {
+            return (element.serialNumber === product.serialNumber)
+        }
+				
+        return products.findIndex(compareElements);		
+	}
+    
+    //Metodo que devuelve la posición de un producto en una categoria.
+    function getCategoryProducts(product, categoryProducts){
+		if (!(product instanceof Product)){ 
+			throw new ProductStoreHouseException();
+		}
+        
+		function compareElements(element){
+			return (element.serialNumber === product.serialNumber)
+		}
+		
+		return categoryProducts.findIndex(compareElements);	
+	}
+            
     this.addProductInShop = function(product, shop, num){
 				if (!(product instanceof Product)) { 
 					throw new ProductStoreHouseException();
@@ -342,7 +356,7 @@ function StoreHouse(){
 		}
         
         if (shop == null){ 
-			throw new EmptyValueException(category);
+			throw new EmptyValueException(shop);
 		}
         
 		var indexShop = getShopIndex(shop);
@@ -360,7 +374,7 @@ function StoreHouse(){
 			throw new ShopStoreHouseException();
 		}
         
-		var indexShop = getShopIndex(category);   
+		var indexShop = getShopIndex(shop);   
         if (indexShop !== -1){
             shops.splice(indexShop, 1);
         }else{
@@ -368,53 +382,47 @@ function StoreHouse(){
         }
         
         return shops.length();
-	}                
+	}
     
+    function getShopIndex(shop){
+        if (!(shop instanceof Shop)) { 
+            throw new ShopStoreHouseException();
+        }		
+
+        function compareElements(element) {
+            return (element.cif === shop.cif)
+        }
+				
+        return shops.findIndex(compareElements);		
+	}
     
+ 
 }
 
 
-function Category(){
+var storehouse = new StoreHouse();
+var cat1 = new Category("categoria 1");
+var cat2 = new Category("categoria 2");
+var pro1 = new Product("aa", "3");
+var pro2 = new Product("bb", "5");
 
-	if (!(this instanceof Category)) 
-		throw new InvalidAccessConstructorException();
+storehouse.name = "  hola";
+console.log(storehouse.name);
 
-	var title = "";
-	var description = "";
-    var products = [];
+console.log(storehouse.addCategory(cat1));
+console.log(storehouse.addCategory(cat2));
+console.log(storehouse.removeCategory(cat2));
+var categories = storehouse.categories;
+var category = categories.next();
+while (category.done !== true){
+		console.log ("Categoria: " + category.value.title);
+		category = categories.next();
 }
 
-function Product(){
+console.log(storehouse.addProduct(pro1, cat2));
+console.log(storehouse.addProduct(pro2, cat2));
+console.log(storehouse.removeProduct(pro1));
 
-	if (!(this instanceof Product)) 
-		throw new InvalidAccessConstructorException();
+//console.log(storehouse.addProduct(pro2, cat1));
 
-	var serialNumber = "";
-    var name = "";
-	var description = "";
-    var price = "";
-    var tax = "";
-    var images = [];
-    var categories = [];
-}
 
-function Coords(){
-
-	if (!(this instanceof Coords)) 
-		throw new InvalidAccessConstructorException();
-
-	var latitude = "";
-	var longitude = "";
-}
-
-function Shop(){
-
-	if (!(this instanceof Coords)) 
-		throw new InvalidAccessConstructorException();
-
-	var cif = "";
-	var name = "";
-    var direction = "";
-    var phone = "";
-    var coords = "";
-}
