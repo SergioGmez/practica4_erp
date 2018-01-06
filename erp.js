@@ -215,7 +215,6 @@ function StoreHouse(){
 
 
 		var productPosition = getProductIndex(product);
-        
         if (productPosition === -1){
 			products.push(product);
 		}
@@ -235,10 +234,13 @@ function StoreHouse(){
         return categories[categoryPosition].products.length;
 	}
     
+    //Método que borra un producto de una categoria. Devuelve el numero de productos de dicha categoria.
     this.removeProduct = function(product){
 		if (!(product instanceof Product)) { 
 			throw new ProductStoreHouseException();
-		}				
+		}
+        
+        var productPosition = getProductIndex(product);
 
 		var i = categories.length - 1, position = -1;
 		while (i >= 0 && position === -1){					
@@ -248,11 +250,11 @@ function StoreHouse(){
 
 		if (position !== -1){
 			categories[i+1].products.splice(position, 1);
-		} else {
+            products.splice(productPosition, 1);
+		}else{
 			throw new ProductNotExistsStoreHouseException();
 		}
-        
-        return categories[i+1].products.lenght;
+        return categories[i+1].products.length;
 	}
     
     //Metodo que devuelve la posición de un producto dado.
@@ -280,75 +282,121 @@ function StoreHouse(){
 		
 		return categoryProducts.findIndex(compareElements);	
 	}
-            
+     
+    
     this.addProductInShop = function(product, shop, num){
-				if (!(product instanceof Product)) { 
-					throw new ProductStoreHouseException();
-				}	
+        if (!(product instanceof Product)) { 
+			throw new ProductStoreHouseException();
+		}	
 
-				if (!(shop instanceof Shop)) { 
-					throw new ShopStoreHouseException();
-				}		
-				if (shop === null || shop === 'undefined' || shop === ''){
-					shop = this.defaultShop;
-				}	
+		if (!(shop instanceof Shop)) { 
+			throw new ShopStoreHouseException();
+		}		
+		
+        if (shop === null || shop === 'undefined' || shop === ''){
+			shop = this.defaultShop;
+		}	
 
-				//Obtenemos posición de la categoría. Si no existe se añade.
-				var productPosition = getProductIndex(product); 
-				if (productPosition === -1){
-					products.push(product);
-				}	
+		var productPosition = getProductIndex(product); 
+		if (productPosition === -1){
+			products.push(product);
+		}	
 
-				//Obtenemos posición del autor. Si no existe se añade.
-				var shopPosition = getShopPosition(shop); 
-				if (shopPosition === -1){
-					shopPosition = this.addShop(shop)-1;
-				}
+		var shopPosition = getShopIndex(shop); 
+		if (shopPosition === -1){
+			shopPosition = this.addShop(shop)-1;
+		}
 
-				//Obtenemos posición de la imagen en la categoría. Si no existe se añade. Si existe se lanza excepción.
-				var productShopPosition = getShopProductPosition(product, shops[shopPosition].products); 	
-				if (productShopPosition === -1){
-					shops[shopPosition].products.push(
-						{
-							stock: num
-						}
-					);
-				}else{
-					throw new ImageExistsImageManagerException(category);
-				}	
+		var productShopPosition = getShopProducts(product, shops[shopPosition].products); 	
+		if (productShopPosition === -1){
+            product.stock = num;
+			shops[shopPosition].products.push(
+                {
+                 product: product,
+                 stock: num    
+                }
+            );
+		}else{
+			throw new ProductCategoryExistsException(product);
+		}	
 
-				return shops[shopPosition].products.length;
-			}
+		return shops[shopPosition].products.length;
+    }                              
+    
+   function getShopProducts(product, shopProducts){
+		if (!(product instanceof Product)){ 
+			throw new ShopStoreHouseException();
+		}
+
+		function compareElements(element){
+			return (element.product.serialNumber === product.serialNumber)
+		}
+       
+		return shopProducts.findIndex(compareElements);	
+	}
     
    this.addQuantityProductInShop = function(product, shop, num){
-				if (!(product instanceof Product)) { 
-					throw new ProductStoreHouseException();
-				}	
+		if (!(product instanceof Product)) { 
+			throw new ProductStoreHouseException();
+		}	
 
-				if (!(shop instanceof Shop)) { 
-					throw new ShopStoreHouseException();
-				}		
+		if (!(shop instanceof Shop)) { 
+			throw new ShopStoreHouseException();
+		}		
 
-				var productPosition = getProductIndex(product); 
-				if (productPosition === -1){
-					//throw new 
-				}	
+		var productPosition = getProductIndex(product); 
+		if (productPosition === -1){
+			//throw new 
+		}	
+        
+		var shopPosition = getShopIndex(shop); 
+		if (shopPosition === -1){
+			//throw new 
+		}
 
-				var shopPosition = getShopPosition(shop); 
-				if (shopPosition === -1){
-					//throw new 
-				}
+		
+		var productShopPosition = getShopProducts(product, shops[shopPosition].products);
 
-				//Obtenemos posición de la imagen en la categoría. Si no existe se añade. Si existe se lanza excepción.
-				var productShopPosition = getShopProductPosition(product, shops[shopPosition].products); 	
-				if (productShopPosition !== -1){
-					shops[shopPosition].products[productShopPosition].stock += num;
-				}else{
-					throw new ImageExistsImageManagerException(category);
-				}	
+		if (productShopPosition !== -1){
+			shops[shopPosition].products[productShopPosition].stock += num;
+		}else{
+			throw new IProductCategoryExistsException(category);
+		}	
 
-				return shops[shopPosition].products.length;
-			}
+        return shops[shopPosition].products[productShopPosition].stock;
+	}
+   
+   this.getCategoryProducts = function(category, product ){
+		if (!(category instanceof Category)) { 
+			throw new CategoryStoreHouseException ();
+		}
+       
+        if (!(product instanceof Product)) {
+            throw new ProductStoreHouseException ();
+		}	
+       
+		var categoryPosition = getCategoryIndex(category);  	
+		if (categoryPosition === -1) throw new CategoryNoExistsException();
+        var nextIndex = 0;
+
+		return {
+            next: function(){
+                var product = null;
+         
+                while (nextIndex < categories[categoryPosition].products.length && product === null){ 
+                    
+                    if (product.serialNumber === categories[categoryPosition].products[nextIndex].serialNumber ){
+                        product = categories[categoryPosition].products[nextIndex];
+                    }
+                    nextIndex++;
+                }
+                if (product !== null){
+                    return {value: product, done: false}
+                }
+                if (categoryPosition >= categories.length) return {done: true};
+            }
+		}
+	}
                     
     this.addShop = function(shop){
 		if (!(shop instanceof Shop)){ 
@@ -366,7 +414,7 @@ function StoreHouse(){
             throw new ShopExistsException();
         }
         
-        return shops.length();
+        return shops.length;
 	}
     
     this.removeShop = function(shop){
@@ -374,13 +422,18 @@ function StoreHouse(){
 			throw new ShopStoreHouseException();
 		}
         
-		var indexShop = getShopIndex(shop);   
+		var indexShop = getShopIndex(shop); 
+          
         if (indexShop !== -1){
+            var i = 0;
+            
+            while ( i < shops[indexShop].length){
+                this.addProductInShop(shops[indexShop].products[i], this.defaultShop, shops[indexShop].products[i].stock );
+            }
             shops.splice(indexShop, 1);
         }else{
-            throw new ShopNoExistsException();
+            throw new CategoryNoExistsException();
         }
-        
         return shops.length();
 	}
     
@@ -405,7 +458,10 @@ var cat1 = new Category("categoria 1");
 var cat2 = new Category("categoria 2");
 var pro1 = new Product("aa", "3");
 var pro2 = new Product("bb", "5");
+var coor1 = new Coords();
+var shop1 = new Shop("tienda1", coor1);
 
+pro2.serialNumber = 2;
 storehouse.name = "  hola";
 console.log(storehouse.name);
 
@@ -422,7 +478,9 @@ while (category.done !== true){
 console.log(storehouse.addProduct(pro1, cat2));
 console.log(storehouse.addProduct(pro2, cat2));
 console.log(storehouse.removeProduct(pro1));
-
+console.log(storehouse.addProductInShop(pro1, shop1, 4));
+console.log(storehouse.addProductInShop(pro2, shop1, 3));
+console.log(storehouse.addQuantityProductInShop(pro1, shop1, 4));
 //console.log(storehouse.addProduct(pro2, cat1));
 
 

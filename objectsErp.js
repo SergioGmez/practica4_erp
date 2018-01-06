@@ -68,6 +68,9 @@ function Product(name, price){
 		get:function(){
 			return serialNumber;
 		},
+        set:function(value){
+			serialNumber = value;
+		}
 	});		
 
 	Object.defineProperty(this, 'name', {
@@ -131,14 +134,69 @@ function Coords(){
 	var longitude = "";
 }
 
-function Shop(){
+function Shop(name, coords){
 
-	if (!(this instanceof Coords)) 
+	if (!(this instanceof Shop)) 
 		throw new InvalidAccessConstructorException();
 
 	var cif = "";
-	var name = "";
+	var name = name;
     var direction = "";
     var phone = "";
-    var coords = "";
+    var coords = coords;
+    var products = [];
+    
+    Object.defineProperty(this, 'cif', {
+		get:function(){
+			return cif;
+		},
+	});		
+
+	Object.defineProperty(this, 'name', {
+		get:function(){
+			return name;
+		},
+		set:function(value){
+			if (value === 'undefined' || value === '') throw new EmptyValueException("name");	
+			name = value;
+		}		
+	});			
+
+	Object.defineProperty(this, 'direction', {
+		get:function(){
+			return direction;
+		},
+		set:function(value){
+			if (value === 'undefined' || value === '') throw new EmptyValueException("direction");	
+			direction = value;
+		}		
+	});
+    
+    Object.defineProperty(this, 'phone', {
+		get:function(){
+			return phone;
+		},
+		set:function(value){
+			if (value === 'undefined' || value === '') throw new EmptyValueException("phone");	
+			phone = value;
+		}		
+	});
+    
+    Object.defineProperty(this, 'coords', {
+		get:function(){
+			return tax;
+		},
+		set:function(value){
+			if (!(value instanceof Coords)){ 
+			    throw new ShopStoreHouseException();
+		    }
+            coords = value;
+		}		
+	});
+    
+    Object.defineProperty(this, 'products', {
+		get:function(){
+			return products;
+		},		
+	});
 }
