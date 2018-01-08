@@ -1,13 +1,5 @@
 "use strict";
 
-function BaseException() {
-}
-BaseException.prototype = new Error();
-BaseException.prototype.constructor = BaseException
-BaseException.prototype.toString = function(){
-	return this.name + ": " + this.message;
-};
-
 //Excepción general.
 function StoreHouseException() {
 	this.name = "StoreHouseException";
@@ -16,13 +8,7 @@ function StoreHouseException() {
 StoreHouseException.prototype = new BaseException();
 StoreHouseException.prototype.constructor = StoreHouseException;
 
-//Excepción que se lanza cuando un parámetro no es un objeto Storehouse.
-function ObjectStoreHouseException() {
-	this.name = "ObjectStoreHouseException";
-	this.message = "Error. The method needs a object Storehouse.";
-}
-ObjectStoreHouseException.prototype = new BaseException();
-ObjectStoreHouseException.prototype.constructor = ObjectStoreHouseException;
+//----> Excepciones del objeto Category
 
 //Excepción que se lanza cuando un parámetro no es un objeto Category.
 function CategoryStoreHouseException() {
@@ -49,13 +35,7 @@ CategoryNoExistsException.prototype = new BaseException();
 CategoryNoExistsException.prototype.constructor = CategoryNoExistsException;
 
 
-//Excepción que se lanza cuando un objeto category ya existe.
-function ParameterValidationException() {
-	this.name = "ParameterValidationException";
-	this.message = "Error. Parameter Validation Exception.";
-}
-ParameterValidationException.prototype = new BaseException();
-ParameterValidationException.prototype.constructor = ParameterValidationException;
+//-----> Excepciones del objeto Producto
 
 //Excepción que se lanza cuando un parámetro no es un objeto Product.
 function ProductStoreHouseException() {
@@ -65,34 +45,48 @@ function ProductStoreHouseException() {
 ProductStoreHouseException.prototype = new BaseException();
 ProductStoreHouseException.prototype.constructor = ProductStoreHouseException;
 
-function ProductCategoryExistsException(product) {
-	this.name = "ProductCategoryExistsException";
-	this.message = "Error. "+product+" already exist in the category.";
+//Excepción que se lanza cuando un objeto product ya existe.
+function ProductExistsException(product) {
+	this.name = "ProductExistsException";
+	this.message = "Error. "+product+" already exist.";
 }
-ProductCategoryExistsException.prototype = new BaseException();
-ProductCategoryExistsException.prototype.constructor = ProductCategoryExistsException;
+ProductExistsException.prototype = new BaseException();
+ProductExistsException.prototype.constructor = ProductExistsException;
+
+//Excepción que se lanza cuando un objeto product no existe.
+function ProductNotExistsException(product) {
+	this.name = "ProductNotExistsException";
+	this.message = "Error. "+product+" not exist.";
+}
+ProductNotExistsException.prototype = new BaseException();
+ProductNotExistsException.prototype.constructor = ProductNotExistsException;
+
+//-----> Excepciones del objeto Coords
+
+function CoordsStoreHouseException() {
+	this.name = "CoordsStoreHouseException";
+	this.message = "Error. The method needs a object Coords.";
+}
+CoordsStoreHouseException.prototype = new BaseException();
+CoordsStoreHouseException.prototype.constructor = CoordsStoreHouseException;
+
+
+//-----> Excepciones del objeto Shop
 
 function ShopStoreHouseException() {
 	this.name = "ShopStoreHouseException";
-	this.message = "Error. The method needs a object Product.";
+	this.message = "Error. The method needs a object Shop.";
 }
 ShopStoreHouseException.prototype = new BaseException();
 ShopStoreHouseException.prototype.constructor = ShopStoreHouseException;
 
-function EmptyValueException(param) {
-	this.name = "EmptyValueException";
-	this.message = "Error: The parameter " + param + " can't be empty.";
+//Excepción que se lanza cuando un objeto product no existe.
+function ShopNotExistsException(product) {
+	this.name = "ShopNotExistsException";
+	this.message = "Error. "+product+" not exist.";
 }
-EmptyValueException.prototype = new ParameterValidationException(); 
-EmptyValueException.prototype.constructor = EmptyValueException;
-
-function InvalidAccessConstructorException() {
-	this.name = "InvalidAccessConstructorException";
-	this.message = "Constructor can’t be called as a function.";
-}
-InvalidAccessConstructorException.prototype = new BaseException(); 
-InvalidAccessConstructorException.prototype.constructor = InvalidAccessConstructorException;
-
+ProductNotExistsException.prototype = new BaseException();
+ProductNotExistsException.prototype.constructor = ProductNotExistsException;
 
 
 function StoreHouse(){
@@ -100,20 +94,20 @@ function StoreHouse(){
 	if (!(this instanceof StoreHouse)) 
 		throw new InvalidAccessConstructorException();
 
-	//Definición de atributos privados del objeto
-	var name = "";
+	//Definición de atributos privados del objeto.
+	var name = null;
 	var products = [];
     var categories = [];
     var shops = [];
     
-    //Definición de los metodos 'get' y 'set' del atributo name
+    //Definición de los metodos 'get' y 'set' del atributo name.
     Object.defineProperty(this, 'name', {
 			get:function(){
 				return name;
 			},
 			set:function(value){
 				value = value.trim();
-				if (value === "" ) throw new EmptyValueException("name");		
+				if (value === "" && value === undefined ) throw new EmptyValueException("name");		
 				name = value;
 			}		
 		});
@@ -228,13 +222,14 @@ function StoreHouse(){
         
 		if (productCategoryPos === -1){
 			categories[categoryPosition].products.push(product);
+            shops[0].products.push(product);
 		}else{
-            throw new ProductCategoryExistsException(product);
+            throw new ProductExistsException(product);
 		}	
         return categories[categoryPosition].products.length;
 	}
     
-    //Método que borra un producto de una categoria. Devuelve el numero de productos de dicha categoria.
+    //Método que borra un producto. Devuelve el numero de productos de dicha categoria.
     this.removeProduct = function(product){
 		if (!(product instanceof Product)) { 
 			throw new ProductStoreHouseException();
@@ -242,19 +237,33 @@ function StoreHouse(){
         
         var productPosition = getProductIndex(product);
 
-		var i = categories.length - 1, position = -1;
-		while (i >= 0 && position === -1){					
-			position = getCategoryProducts(product, categories[i].products); 
+		var i = categories.length - 1, categoryPosition = -1;
+		while (i >= 0 && categoryPosition === -1){					
+			categoryPosition = getCategoryProducts(product, categories[i].products); 
 			i--;
-		}		
-
-		if (position !== -1){
-			categories[i+1].products.splice(position, 1);
-            products.splice(productPosition, 1);
-		}else{
-			throw new ProductNotExistsStoreHouseException();
 		}
-        return categories[i+1].products.length;
+        
+        var y = shops.length - 1, shopPosition = -1;
+		while (y >= 0 && shopPosition === -1){					
+			shopPosition = getShopProducts(product, shops[y].products); 
+			y--;
+		}
+
+		if (productPosition !== -1){
+            products.splice(productPosition, 1);
+            
+            if (categoryPosition !== -1 ){
+                categories[i+1].products.splice(categoryPosition, 1);
+            }
+			
+            if (shopPosition !== -1 ){
+                shops[y+1].products.splice(shopPosition, 1);
+            }
+            
+		}else{
+			throw new ProductNotExistsException(product);
+		}
+        return products.length;
 	}
     
     //Metodo que devuelve la posición de un producto dado.
@@ -270,7 +279,7 @@ function StoreHouse(){
         return products.findIndex(compareElements);		
 	}
     
-    //Metodo que devuelve la posición de un producto en una categoria.
+    //Método que devuelve la posición de un producto en una categoria.
     function getCategoryProducts(product, categoryProducts){
 		if (!(product instanceof Product)){ 
 			throw new ProductStoreHouseException();
@@ -293,16 +302,12 @@ function StoreHouse(){
 			throw new ShopStoreHouseException();
 		}		
 		
-        if (shop === null || shop === 'undefined' || shop === ''){
-			shop = this.defaultShop;
-		}	
-
 		var productPosition = getProductIndex(product); 
 		if (productPosition === -1){
 			products.push(product);
 		}	
 
-		var shopPosition = getShopIndex(shop); 
+		var shopPosition = getShopIndex(shop);
 		if (shopPosition === -1){
 			shopPosition = this.addShop(shop)-1;
 		}
@@ -313,11 +318,13 @@ function StoreHouse(){
 			shops[shopPosition].products.push(
                 {
                  product: product,
+                 serialNumber: product.serialNumber,
                  stock: num    
                 }
             );
+            categories[0].products.push(product);
 		}else{
-			throw new ProductCategoryExistsException(product);
+			throw new ProductExistsException(product);
 		}	
 
 		return shops[shopPosition].products.length;
@@ -329,7 +336,7 @@ function StoreHouse(){
 		}
 
 		function compareElements(element){
-			return (element.product.serialNumber === product.serialNumber)
+			return (element.serialNumber === product.serialNumber)
 		}
        
 		return shopProducts.findIndex(compareElements);	
@@ -346,13 +353,15 @@ function StoreHouse(){
 
 		var productPosition = getProductIndex(product); 
 		if (productPosition === -1){
-			//throw new 
+			throw new ProductNotExistsException(product);
 		}	
         
 		var shopPosition = getShopIndex(shop); 
 		if (shopPosition === -1){
-			//throw new 
+			throw new ShopNotExistsException(product);
 		}
+       
+        if (num < 0 ) throw new InvalidValueException("num", num);
 
 		
 		var productShopPosition = getShopProducts(product, shops[shopPosition].products);
@@ -360,7 +369,7 @@ function StoreHouse(){
 		if (productShopPosition !== -1){
 			shops[shopPosition].products[productShopPosition].stock += num;
 		}else{
-			throw new IProductCategoryExistsException(category);
+			throw new ProductNotExistsException(product);
 		}	
 
         return shops[shopPosition].products[productShopPosition].stock;
@@ -437,6 +446,39 @@ function StoreHouse(){
         return shops.length();
 	}
     
+    this.getShopProducts = function(shop, product ){
+		if (!(shop instanceof Shop)) { 
+			throw new ShopStoreHouseException ();
+		}
+       
+        if (!(product instanceof Product)) {
+            throw new ProductStoreHouseException ();
+		}	
+       
+		var shopPosition = getShopIndex(shop);  	
+		if (shopPosition === -1) throw new ShopNotExistsException();
+        
+        var nextIndex = 0;
+
+		return {
+            next: function(){
+                var product = null;
+         
+                while (nextIndex < shops[shopPosition].products.length && product === null){ 
+                    
+                    if (product.serialNumber === shops[shopPosition].products[nextIndex].serialNumber ){
+                        product = shops[shopPosition].products[nextIndex];
+                    }
+                    nextIndex++;
+                }
+                if (product !== null){
+                    return {value: product, done: false}
+                }
+                if (shopPosition >= shops.length) return {done: true};
+            }
+		}
+	}
+    
     function getShopIndex(shop){
         if (!(shop instanceof Shop)) { 
             throw new ShopStoreHouseException();
@@ -449,38 +491,9 @@ function StoreHouse(){
         return shops.findIndex(compareElements);		
 	}
     
+    //Tienda por defecto.
+    var coord = new Coords(14, 68);
+	var defaultShop = new Shop("0123", "General", coord);
+	this.addShop(defaultShop);
  
 }
-
-
-var storehouse = new StoreHouse();
-var cat1 = new Category("categoria 1");
-var cat2 = new Category("categoria 2");
-var pro1 = new Product("aa", "3");
-var pro2 = new Product("bb", "5");
-var coor1 = new Coords();
-var shop1 = new Shop("tienda1", coor1);
-
-pro2.serialNumber = 2;
-storehouse.name = "  hola";
-console.log(storehouse.name);
-
-console.log(storehouse.addCategory(cat1));
-console.log(storehouse.addCategory(cat2));
-console.log(storehouse.removeCategory(cat2));
-var categories = storehouse.categories;
-var category = categories.next();
-while (category.done !== true){
-		console.log ("Categoria: " + category.value.title);
-		category = categories.next();
-}
-
-console.log(storehouse.addProduct(pro1, cat2));
-console.log(storehouse.addProduct(pro2, cat2));
-console.log(storehouse.removeProduct(pro1));
-console.log(storehouse.addProductInShop(pro1, shop1, 4));
-console.log(storehouse.addProductInShop(pro2, shop1, 3));
-console.log(storehouse.addQuantityProductInShop(pro1, shop1, 4));
-//console.log(storehouse.addProduct(pro2, cat1));
-
-

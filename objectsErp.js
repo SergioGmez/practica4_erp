@@ -1,24 +1,26 @@
+"use strict";
 
-function Category(title = "Anon"){
+//Objeto Category
+function Category(titleValue){
     
     if (!(this instanceof Category)) 
 		throw new InvalidAccessConstructorException();
 
-	title = title.trim();
-	if (title === 'undefined' || title === 'Anon') throw new EmptyValueException("title");					
+	if (titleValue === undefined || titleValue === null) throw new EmptyValueException("title");
+    titleValue = titleValue.trim();
 
-	var title = title;	
-	var description = "";
+	var title = titleValue;	
+	var description = null;
     var products = [];
 
 	Object.defineProperty(this, 'title', {
 		get:function(){
 			return title;
 		},
-		set:function(title = "Anonimous"){
+		set:function(value){
 			title = title.trim();
-			if (title === 'undefined' || title === 'Anon') throw new EmptyValueException("title");					
-			title = title;
+			if (title === undefined || title === null) throw new EmptyValueException("title");					
+			title = value;
 		}		
 	});		
 	
@@ -27,7 +29,7 @@ function Category(title = "Anon"){
 			return description;
 		},
 		set:function(value){
-			if (value === 'undefined') throw new EmptyValueException("description");	
+			if (value === undefined) throw new EmptyValueException("description");	
 			description = value;
 		}		
 	});
@@ -37,113 +39,246 @@ function Category(title = "Anon"){
 			return products;
 		}	
 	});
-
 }
 Category.prototype = {};
 Category.prototype.constructor = Category;
 Category.prototype.toString = function (){	
 	return "Category: " + this.title + " (" + this.description + ")"; 
-}
+};
 
-function Product(name, price){
-	//La función se invoca con el operador new
-	if (!(this instanceof Product)) 
-		throw new InvalidAccessConstructorException();
+//Objeto Product
+function Product(serialNumberValue, nameValue, priceValue){
 
-	name = name.trim();
-	price = price.trim();
+        if (!(this instanceof Product)) 
+            throw new InvalidAccessConstructorException();
 
-	if (name === 'undefined' || name === '') throw new EmptyValueException("name");	
+        if (serialNumberValue === undefined || serialNumberValue === '') throw new EmptyValueException("serialNumber");
+        if (typeof serialNumberValue !== 'number') throw new InvalidValueException("pages",serialNumberValue); 
 
-	if (price === 'undefined' || price === '') throw new EmptyValueException("price");	
+        if (nameValue === undefined || nameValue === '') throw new EmptyValueException("name");	
 
-    var serialNumber = 1
-	var name = name;
-    var description = null;
-	var price = price;
-    var tax = null;
-    var images = [];
-
-	Object.defineProperty(this, 'serialNumber', {
-		get:function(){
-			return serialNumber;
-		},
-        set:function(value){
-			serialNumber = value;
-		}
-	});		
-
-	Object.defineProperty(this, 'name', {
-		get:function(){
-			return name;
-		},
-		set:function(value){
-			if (value === 'undefined' || value === '') throw new EmptyValueException("name");	
-			name = value;
-		}		
-	});			
-
-	Object.defineProperty(this, 'description', {
-		get:function(){
-			return description;
-		},
-		set:function(value){
-			if (value === 'undefined' || value === '') throw new EmptyValueException("description");	
-			description = value;
-		}		
-	});
+        if (priceValue === undefined || priceValue === '') throw new EmptyValueException("price");
+        if (typeof priceValue !== 'number') throw new InvalidValueException("pages",priceValue);
     
-    Object.defineProperty(this, 'price', {
-		get:function(){
-			return price;
-		},
-		set:function(value){
-			if (value === 'undefined' || value === '') throw new EmptyValueException("price");	
-			price = value;
-		}		
-	});
-    
-    Object.defineProperty(this, 'tax', {
-		get:function(){
-			return tax;
-		},
-		set:function(value){
-			if (value === 'undefined' || value === '') throw new EmptyValueException("tax");	
-			tax = value;
-		}		
-	});
-    
-    Object.defineProperty(this, 'images', {
-		get:function(){
-			return images;
-		},		
-	});
+        nameValue = nameValue.trim();
+
+        var serialNumber = serialNumberValue;
+        var name = nameValue;
+        var description = null;
+        var price = priceValue;
+        var tax = null;
+        var images = [];
+
+        Object.defineProperty(this, 'serialNumber', {
+            get:function(){
+                return serialNumber;
+            },
+            set:function(value){
+                if (value === undefined || value === '') throw new EmptyValueException("serialNumber");
+                if (typeof value !== 'number') throw new InvalidValueException("serialNumbe",value);
+                serialNumber = value;
+            }
+        });		
+
+        Object.defineProperty(this, 'name', {
+            get:function(){
+                return name;
+            },
+            set:function(value){
+                if (value === undefined || value === '') throw new EmptyValueException("name");	
+                name = value;
+            }		
+        });			
+
+        Object.defineProperty(this, 'description', {
+            get:function(){
+                return description;
+            },
+            set:function(value){
+                if (value === undefined || value === '') throw new EmptyValueException("description");	
+                description = value;
+            }		
+        });
+
+        Object.defineProperty(this, 'price', {
+            get:function(){
+                return price;
+            },
+            set:function(value){
+                if (value === undefined || value === '') throw new EmptyValueException("price");
+                if (typeof value !== 'number') throw new InvalidValueException("price",value);
+                price = value;
+            }		
+        });
+
+        Object.defineProperty(this, 'tax', {
+            get:function(){
+                return tax;
+            },
+            set:function(value){
+                if (value === undefined || value === '') throw new EmptyValueException("tax");	
+                tax = value;
+            }		
+        });
+
+        Object.defineProperty(this, 'images', {
+            get:function(){
+                return images;
+            },		
+        });
+
 }
 Product.prototype = {};
 Product.prototype.constructor = Product;
 Product.prototype.toString = function (){	
-	return "(SerialNumber: " + this.serialNumber + ") Name: "+this.name+" Price: "+this.price; 
+    return "(SerialNumber: " + this.serialNumber + ") Name: "+this.name+" Price: "+this.price; 
 }
 
-function Coords(){
+//Objeto Shirt. Hereda del objeto product.
+function Shirt(serialNumber, name, price, tailValue){
+		if (!(this instanceof Shirt))
+			throw InvalidAccessConstructorException();
+		
+		Product.call(this, serialNumber, name, price);
+        if (typeof tailValue === undefined) throw new EmptyValueException("tail");
+        
+        var tail = tailValue;
+        
+		Object.defineProperty(this, 'tail', {
+			get:function(){
+				return tail;
+			},
+			set:function(value){
+				if (typeof tail === undefined) throw new EmptyValueException("tail");
+                if (typeof value !== 'number') throw new InvalidValueException("pages",value);
+				tail = value;		
+			}		
+		});	
+}	
+Shirt.prototype = Object.create(Product.prototype);
+Shirt.prototype.constructor = Shirt;
+Shirt.prototype.toString = function (){	
+    return "(SerialNumber: " + this.serialNumber + ") Name: "+this.name+" Price: "+this.price+" Tail "+this.tail; 
+}
+  
+//Objeto Book. Hereda del objeto product.
+function Book(serialNumber, name, price, pagesValue){
+		if (!(this instanceof Book))
+			throw InvalidAccessConstructorException();
+		
+        if (typeof pagesValue === undefined && pagesValue === '') throw new EmptyValueException("pages");
+        if (typeof pagesValue !== 'number') throw new InvalidValueException("pages",pagesValue); 
+        
+        Product.call(this, serialNumber, name, price);
+    
+        var pages = pagesValue;    
+    
+		Object.defineProperty(this, 'pages', {
+			get:function(){
+				return pages;
+			},
+			set:function(value){
+				if (typeof pages === 'undefined') throw new EmptyValueException("pages");
+                if (typeof pages === 'Number') throw new InvalidValueException("pages",value); 
+				pages = value;		
+			}		
+		});	
+}	
+Book.prototype = Object.create(Product.prototype);
+Book.prototype.constructor = Book;
+Book.prototype.toString = function (){	
+    return "(SerialNumber: " + this.serialNumber + ") Name: "+this.name+" Price: "+this.price+" Pages: "+this.pages; 
+}
+
+//Objeto TV. Hereda del objeto product.
+function TV(serialNumber, name, price, inchesValue){
+		if (!(this instanceof TV))
+			throw InvalidAccessConstructorException();
+		
+        if (typeof inches === undefined) throw new EmptyValueException("inches");
+        if (typeof inchesValue !== 'number') throw new InvalidValueException("inches",inchesValue); 
+    
+        Product.call(this, serialNumber, name, price);
+    
+        var inches = inchesValue;
+    
+		Object.defineProperty(this, 'inches', {
+			get:function(){
+				return inches;
+			},
+			set:function(value){
+				if (typeof tail === undefined) throw new EmptyValueException("inches");
+                if (typeof Value !== 'number') throw new InvalidValueException("inches",value); 
+				inches = value;		
+			}		
+		});	
+}	
+TV.prototype = Object.create(Product.prototype);
+TV.prototype.constructor = TV;
+Book.prototype.toString = function (){	
+    return "(SerialNumber: " + this.serialNumber + ") Name: "+this.name+" Price: "+this.price+" Inches: "+this.inches; 
+}
+    
+function Coords(latitudeValue, longitudeValue){
 
 	if (!(this instanceof Coords)) 
 		throw new InvalidAccessConstructorException();
+    
+    latitude = typeof latitude !== 'undefined' ? Number(latitude).valueOf() : 0;
+	if (Number.isNaN(latitude)  || latitude < -90 || latitude > 90) 
+		throw new InvalidValueException("latitude", latitude);
+	longitude = typeof longitude !== 'undefined' ? Number(longitude).valueOf() : 0;
+	if (Number.isNaN(longitude)  || longitude < -180 || longitude > 180) 
+		throw new InvalidValueException("longitude", longitude);
 
-	var latitude = "";
-	var longitude = "";
+	var latitude = latitudeValue;
+	var longitude = longitudeValue;
+    
+ 	Object.defineProperty(this, 'latitude', {
+		get:function(){
+			return latitude;
+		},
+		set:function(value){
+			value = typeof value !== undefined ? Number(value).valueOf() : 0;
+			if (Number.isNaN(value)  || value < -90 || value > 90) 
+				throw new InvalidValueException("latitude", value);
+			latitude = value;
+		}		
+	});		
+
+	Object.defineProperty(this, 'longitude', {
+		get:function(){
+			return longitude;
+		},
+		set:function(value){
+			value = typeof value !== 'undefined' ? Number(value).valueOf() : 0;
+			if (Number.isNaN(value)  || value < -180 || value > 180) 
+				throw new InvalidValueException("longitude", value);
+			longitude = value;
+		}		
+	});		
+
 }
+Coords.prototype = {};
+Coords.prototype.constructor = Coords;
 
-function Shop(name, coords){
+function Shop(cifValue, nameValue, coordsValue){
 
 	if (!(this instanceof Shop)) 
 		throw new InvalidAccessConstructorException();
+    
+    if (cifValue === undefined || cifValue === '') throw new EmptyValueException("cif");	
 
-	var cif = "";
-	var name = name;
-    var direction = "";
-    var phone = "";
-    var coords = coords;
+    if (nameValue === undefined || nameValue === '') throw new EmptyValueException("name");
+    
+    if (!(coordsValue instanceof Coords)) 
+		throw new CoordsStoreHouseException();
+
+	var cif = cifValue;
+	var name = nameValue;
+    var direction = null;
+    var phone = null;
+    var coords = coordsValue;
     var products = [];
     
     Object.defineProperty(this, 'cif', {
@@ -157,7 +292,7 @@ function Shop(name, coords){
 			return name;
 		},
 		set:function(value){
-			if (value === 'undefined' || value === '') throw new EmptyValueException("name");	
+			if (value === undefined || value === '') throw new EmptyValueException("name");	
 			name = value;
 		}		
 	});			
@@ -167,7 +302,7 @@ function Shop(name, coords){
 			return direction;
 		},
 		set:function(value){
-			if (value === 'undefined' || value === '') throw new EmptyValueException("direction");	
+			if (value === undefined || value === '') throw new EmptyValueException("direction");	
 			direction = value;
 		}		
 	});
@@ -177,7 +312,7 @@ function Shop(name, coords){
 			return phone;
 		},
 		set:function(value){
-			if (value === 'undefined' || value === '') throw new EmptyValueException("phone");	
+			if (value === undefined || value === '') throw new EmptyValueException("phone");	
 			phone = value;
 		}		
 	});
@@ -188,8 +323,8 @@ function Shop(name, coords){
 		},
 		set:function(value){
 			if (!(value instanceof Coords)){ 
-			    throw new ShopStoreHouseException();
-		    }
+			    throw new CoordsStoreHouseException();
+            }
             coords = value;
 		}		
 	});
