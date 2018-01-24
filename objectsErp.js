@@ -215,7 +215,7 @@ function TV(serialNumber, name, price, inchesValue){
 }	
 TV.prototype = Object.create(Product.prototype);
 TV.prototype.constructor = TV;
-Book.prototype.toString = function (){	
+TV.prototype.toString = function (){	
     return "(SerialNumber: " + this.serialNumber + ") Name: "+this.name+" Price: "+this.price+" Inches: "+this.inches; 
 }
     
@@ -335,3 +335,8 @@ function Shop(cifValue, nameValue, coordsValue){
 		},		
 	});
 }
+Shop.prototype = {};
+Shop.prototype.constructor = Shop;
+Shop.prototype.toString = function (){	
+	return "Shop: (" + this.cif + ") "+this.name; 
+};

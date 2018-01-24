@@ -80,10 +80,18 @@ function ShopStoreHouseException() {
 ShopStoreHouseException.prototype = new BaseException();
 ShopStoreHouseException.prototype.constructor = ShopStoreHouseException;
 
+//Excepción que se lanza cuando un objeto product ya existe.
+function ShopExistsException(shop) {
+	this.name = "ShopExistsException";
+	this.message = "Error. "+shop+" already exist.";
+}
+ProductExistsException.prototype = new BaseException();
+ProductExistsException.prototype.constructor = ProductExistsException;
+
 //Excepción que se lanza cuando un objeto product no existe.
-function ShopNotExistsException(product) {
+function ShopNotExistsException(shop) {
 	this.name = "ShopNotExistsException";
-	this.message = "Error. "+product+" not exist.";
+	this.message = "Error. "+shop+" not exist.";
 }
 ProductNotExistsException.prototype = new BaseException();
 ProductNotExistsException.prototype.constructor = ProductNotExistsException;
@@ -143,7 +151,7 @@ function StoreHouse(){
 			throw new CategoryStoreHouseException();
 		}
         
-        if (category == null){ 
+        if (category === undefined && category === null){ 
 			throw new EmptyValueException(category);
 		}
         
@@ -292,7 +300,7 @@ function StoreHouse(){
 		return categoryProducts.findIndex(compareElements);	
 	}
      
-    
+    //Método que añade un producto a una tienda con un stock.
     this.addProductInShop = function(product, shop, num){
         if (!(product instanceof Product)) { 
 			throw new ProductStoreHouseException();
@@ -330,18 +338,7 @@ function StoreHouse(){
 		return shops[shopPosition].products.length;
     }                              
     
-   function getShopProducts(product, shopProducts){
-		if (!(product instanceof Product)){ 
-			throw new ShopStoreHouseException();
-		}
-
-		function compareElements(element){
-			return (element.serialNumber === product.serialNumber)
-		}
-       
-		return shopProducts.findIndex(compareElements);	
-	}
-    
+   //Método que suma stock de un producto de una tienda ya existentes.
    this.addQuantityProductInShop = function(product, shop, num){
 		if (!(product instanceof Product)) { 
 			throw new ProductStoreHouseException();
@@ -375,44 +372,79 @@ function StoreHouse(){
         return shops[shopPosition].products[productShopPosition].stock;
 	}
    
-   this.getCategoryProducts = function(category, product ){
+   //Método que devuelve todos los productos añadidos en una categoria con su stock. Parametro type opcional para filtrar.
+   this.getCategoryProducts = function(category, type){
 		if (!(category instanceof Category)) { 
 			throw new CategoryStoreHouseException ();
 		}
-       
-        if (!(product instanceof Product)) {
-            throw new ProductStoreHouseException ();
-		}	
+        
+        if (category === undefined && category === null){ 
+			throw new EmptyValueException(category);
+		}
        
 		var categoryPosition = getCategoryIndex(category);  	
-		if (categoryPosition === -1) throw new CategoryNoExistsException();
-        var nextIndex = 0;
+		if (categoryPosition === -1) throw new CategoryNotExistsException(category);
+        
+        var productPosition = 0;
+        
+        if (type === null || type === undefined ){
+            return {
+                next: function(){
 
-		return {
-            next: function(){
-                var product = null;
-         
-                while (nextIndex < categories[categoryPosition].products.length && product === null){ 
-                    
-                    if (product.serialNumber === categories[categoryPosition].products[nextIndex].serialNumber ){
-                        product = categories[categoryPosition].products[nextIndex];
+                    var _product = null;
+
+                    _product = category.products[productPosition];
+
+                    if (_product !== null && productPosition < category.products.length ){
+                        productPosition++;
+                        return {value: _product, done: false}
                     }
-                    nextIndex++;
+                    if (productPosition >= category.products.length) return {done: true};
                 }
-                if (product !== null){
-                    return {value: product, done: false}
-                }
-                if (categoryPosition >= categories.length) return {done: true};
             }
-		}
-	}
+        }else{
+            return {
+                next: function(){
                     
+                    var _product = null;
+
+                    _product = category.products[productPosition];
+                    
+                    while ( _product !== null && productPosition < category.products.length ){    
+                        
+                        if ( category.products[productPosition] instanceof type){
+                            _product = category.products[productPosition];
+                            productPosition++;
+                        return {value: _product, done: false}
+                        }
+                        productPosition++; 
+                    }
+                    if (productPosition >= category.products.length) return {done: true};
+                }
+            }
+        }
+	}
+   
+   //Método que devuelve la posición de un producto en una tienda.
+   function getShopProducts(product, shopProducts){
+		if (!(product instanceof Product)){ 
+			throw new ShopStoreHouseException();
+		}
+
+		function compareElements(element){
+			return (element.serialNumber === product.serialNumber)
+		}
+       
+		return shopProducts.findIndex(compareElements);	
+	}
+    
+    //Método que añade una tienda.
     this.addShop = function(shop){
 		if (!(shop instanceof Shop)){ 
 			throw new ShopStoreHouseException();
 		}
         
-        if (shop == null){ 
+        if (shop === undefined && shop === null){ 
 			throw new EmptyValueException(shop);
 		}
         
@@ -420,12 +452,13 @@ function StoreHouse(){
         if (indexShop === -1){
             shops.push(shop);
         }else{
-            throw new ShopExistsException();
+            throw new ShopExistsException(shop);
         }
         
         return shops.length;
 	}
     
+    //Método que elimina una tienda.
     this.removeShop = function(shop){
 		if (!(shop instanceof Shop)) { 
 			throw new ShopStoreHouseException();
@@ -441,44 +474,65 @@ function StoreHouse(){
             }
             shops.splice(indexShop, 1);
         }else{
-            throw new CategoryNoExistsException();
+            throw new ShopNotExistsException(shop);
         }
-        return shops.length();
+        return shops.length;
 	}
     
-    this.getShopProducts = function(shop, product ){
+    //Método que devuelve todos los productos añadidos en una tienda con su stock. Parametro type opcional para filtrar.
+    this.getShopProducts = function(shop, type){
 		if (!(shop instanceof Shop)) { 
 			throw new ShopStoreHouseException ();
 		}
-       
-        if (!(product instanceof Product)) {
-            throw new ProductStoreHouseException ();
-		}	
+        
+        if (shop === undefined && shop === null){ 
+			throw new EmptyValueException(shop);
+		}
        
 		var shopPosition = getShopIndex(shop);  	
-		if (shopPosition === -1) throw new ShopNotExistsException();
+		if (shopPosition === -1) throw new ShopNotExistsException(shop);
         
-        var nextIndex = 0;
+        var productPosition = 0;
+        
+        if (type === null || type === undefined ){
+            return {
+                next: function(){
 
-		return {
-            next: function(){
-                var product = null;
-         
-                while (nextIndex < shops[shopPosition].products.length && product === null){ 
-                    
-                    if (product.serialNumber === shops[shopPosition].products[nextIndex].serialNumber ){
-                        product = shops[shopPosition].products[nextIndex];
+                    var _product = null;
+
+                    _product = shop.products[productPosition];
+
+                    if (_product !== null && productPosition < shop.products.length ){
+                        productPosition++;
+                        return {value: _product, done: false}
                     }
-                    nextIndex++;
+                    if (productPosition >= shop.products.length) return {done: true};
                 }
-                if (product !== null){
-                    return {value: product, done: false}
-                }
-                if (shopPosition >= shops.length) return {done: true};
             }
-		}
+        }else{
+            return {
+                next: function(){
+                    
+                    var _product = null;
+
+                    _product = shop.products[productPosition];
+                    
+                    while ( _product !== null && productPosition < shop.products.length ){    
+                        
+                        if ( shop.products[productPosition].product instanceof type){
+                            _product = shop.products[productPosition];
+                            productPosition++;
+                        return {value: _product, done: false}
+                        }
+                        productPosition++; 
+                    }
+                    if (productPosition >= shop.products.length) return {done: true};
+                }
+            }
+        }
 	}
     
+    //Método que devuelve la posición de una tienda.
     function getShopIndex(shop){
         if (!(shop instanceof Shop)) { 
             throw new ShopStoreHouseException();
